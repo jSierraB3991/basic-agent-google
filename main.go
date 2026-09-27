@@ -10,8 +10,9 @@ import (
 	"google.golang.org/genai"
 )
 
-func run_agent(ctx context.Context) {
+func run_agent() {
 	modelGemini := flag.String("model", "gemini-3.5-flash-lite", "Gemini model to use")
+	verbose := flag.Bool("verbose", false, "Show more information")
 
 	flag.Parse()
 	argsPosicionales := flag.Args()
@@ -20,6 +21,7 @@ func run_agent(ctx context.Context) {
 		log.Fatal("I nedd a prompt.")
 	}
 
+	ctx := context.Background()
 	userInput := argsPosicionales[0]
 	messages := []*genai.Content{
 		{
@@ -30,8 +32,6 @@ func run_agent(ctx context.Context) {
 		},
 	}
 
-	fmt.Printf("model of gemini: %s\n", *modelGemini)
-	fmt.Printf("prompt: %s\n", userInput)
 	client, err := genai.NewClient(ctx, nil)
 	if err != nil {
 		log.Fatalf("Error to create client: %v", err)
@@ -47,18 +47,17 @@ func run_agent(ctx context.Context) {
 		log.Fatalf("Error generate the content: %v", err)
 	}
 
-	if res == nil || res.UsageMetadata == nil {
-		log.Println("response or metadata is null")
-		return
+	if *verbose {
+		fmt.Printf("model of gemini: %s\n", *modelGemini)
+		fmt.Printf("user input: %s\n", userInput)
+		fmt.Printf("Prompt Token %d\n", res.UsageMetadata.PromptTokenCount)
+		fmt.Printf("Response Token %d\n", res.UsageMetadata.CandidatesTokenCount)
 	}
-	fmt.Printf("Prompt Token %d\n", res.UsageMetadata.PromptTokenCount)
-	fmt.Printf("Response Token %d\n", res.UsageMetadata.CandidatesTokenCount)
-	fmt.Println(res.Text())
+	fmt.Printf("Response: %s\n", res.Text())
 }
 
 func main() {
 	fmt.Println("Herramienta para generar archivos para una API en net/http")
-	ctx := context.Background()
 	godotenv.Load()
-	run_agent(ctx)
+	run_agent()
 }
