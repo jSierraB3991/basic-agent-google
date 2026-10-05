@@ -30,7 +30,6 @@ An interactive terminal-based AI coding assistant written in Go that integrates 
 │       ├── tools_files.go    # File creation, reading, deletion, and info tools
 │       └── tools_run_testing.go # Go and Python test execution tools
 ├── functions/                # Tool functions declared and implemented for the agent
-├── portscanner/              # Port scanner utility package
 ├── go.mod                    # Go module dependencies
 ├── go.sum                    # Go checksum file
 └── main.go                   # Application entry point
@@ -93,7 +92,7 @@ The Gemini model can dynamically invoke the following tools during your conversa
 1. **`getFilesInfo`**: Lists files and subdirectories inside a working directory.
 2. **`readFileContent`**: Reads and returns the complete content of a target file.
 3. **`createFile`**: Creates a new file with specified content at a given path.
-4. **`deleteFile`**: Deletes a specified file.
+4. **`deleteFile`**: deletes a specified file.
 5. **`createDir`**: Creates a directory and any necessary parent directories.
 6. **`deleteDir`**: Deletes a directory and its contents.
 7. **`runTestInGo`**: Executes Go test suites for a target test file or package.
