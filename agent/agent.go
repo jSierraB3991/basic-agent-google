@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jSierraB3991/http-cli/agent/tools"
+	"github.com/jsierrab3991/basic-agent-google/agent/tools"
 	"google.golang.org/genai"
 )
 

@@ -1,4 +1,4 @@
-module github.com/jSierraB3991/http-cli
+module github.com/jsierrab3991/basic-agent-google
 
 go 1.26.5
 

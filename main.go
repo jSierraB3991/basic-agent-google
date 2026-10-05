@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jSierraB3991/http-cli/agent"
 	"github.com/joho/godotenv"
+	"github.com/jsierrab3991/basic-agent-google/agent"
 )
 
 func main() {

@@ -49,11 +49,14 @@ func GetFilesInfo(workingDirectory string, directory *string) string {
 
 	var finalResponse strings.Builder
 	noShowDirectories := []string{".vscode", ".venv", "venv", "node_modules", ".git"}
-	noShowFiles := []string{"__debug*", ".env", "build", ".gitignore"}
+	noShowFiles := []string{".env", "build", ".gitignore"}
 
 	for _, entrada := range entradas {
 		name := entrada.Name()
 		isDir := entrada.IsDir()
+		if strings.HasPrefix(name, "__debug") {
+			continue
+		}
 		if isDir {
 			if slices.Contains(noShowDirectories, name) {
 				continue

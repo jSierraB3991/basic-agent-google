@@ -3,7 +3,7 @@ package tools
 import (
 	"fmt"
 
-	"github.com/jSierraB3991/http-cli/functions"
+	"github.com/jsierrab3991/basic-agent-google/functions"
 )
 
 func ExecuteCall(name string, args map[string]any) (map[string]any, error) {

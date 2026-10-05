@@ -48,8 +48,8 @@ An interactive terminal-based AI coding assistant written in Go that integrates 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/jSierraB3991/http-cli.git
-   cd http-cli
+   git clone https://github.com/jsierrab3991/basic-agent-google.git
+   cd basic-agent-google
    ```
 
 2. **Configure Environment Variables**:
