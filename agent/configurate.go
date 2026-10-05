@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"errors"
 	"flag"
 )
 
@@ -10,13 +9,9 @@ func (a *Agent) configurate() error {
 	verbose := flag.Bool("verbose", false, "Show more information")
 
 	flag.Parse()
-	argsPosicionales := flag.Args()
 
-	if len(argsPosicionales) == 0 {
-		return errors.New("I need a question.")
-	}
 	a.model = *modelGemini
-	a.input = argsPosicionales[0]
 	a.verbose = *verbose
+	a.systemPrompt = "You are  coding agent assistant, to can create, read and delete files and folder, you are tools for this propose"
 	return nil
 }

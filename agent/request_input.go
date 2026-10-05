@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/jSierraB3991/http-cli/agent/tools"
 	"google.golang.org/genai"
 )
 
@@ -18,6 +19,6 @@ func (a *Agent) requestInput(messages []*genai.Content) (*genai.GenerateContentR
 		ctx,
 		a.model,
 		messages,
-		nil,
+		tools.GetConfigGenerator(a.systemPrompt),
 	)
 }

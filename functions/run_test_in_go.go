@@ -18,7 +18,7 @@ func RunTestInGo(targetFile string, searchRoot *string) string {
 	}
 
 	// 1. Obtener la ruta del directorio que contiene el archivo
-	projectDir, err := GetDirByFile(rootDirectory, targetFile)
+	projectDir, err := getDirByFile(rootDirectory, targetFile)
 	if err != nil {
 		return fmt.Sprintf("run_test_in_go: error obteniendo el directorio donde se encuentra %s", targetFile)
 	}
@@ -36,7 +36,7 @@ func RunTestInGo(targetFile string, searchRoot *string) string {
 
 // GetDirByFile busca un archivo específico a partir de un directorio inicial
 // y retorna la ruta absoluta de la carpeta que lo contiene.
-func GetDirByFile(startDir string, targetFileName string) (string, error) {
+func getDirByFile(startDir string, targetFileName string) (string, error) {
 	var targetDir string
 
 	err := filepath.Walk(startDir, func(path string, info os.FileInfo, err error) error {
