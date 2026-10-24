@@ -8,33 +8,71 @@ import (
 	"strings"
 )
 
-func RunTestInGo(targetFile string, searchRoot *string) string {
-	if targetFile != "main.go" {
-		return "run_test_in_go: solo se permite main.go para correr pruebas en golang"
-	}
+// RunTestInGo ejecuta pruebas de Go en el directorio o paquete especificado.
+// target: puede ser un archivo (ej: main.go, scanner_test.go), una carpeta, o "./..."
+// searchRoot: directorio raíz opcional desde donde buscar o ejecutar.
+func RunTestInGo(target string, searchRoot *string) string {
 	rootDirectory := "."
 	if searchRoot != nil && strings.TrimSpace(*searchRoot) != "" {
-		rootDirectory = *searchRoot
+		rootDirectory = strings.TrimSpace(*searchRoot)
 	}
 
-	// 1. Obtener la ruta del directorio que contiene el archivo
-	projectDir, err := getDirByFile(rootDirectory, targetFile)
+	target = strings.TrimSpace(target)
+	if target == "" {
+		target = "./..."
+	}
+
+	runDir := rootDirectory
+	testPkg := "./..."
+
+	// Si target termina en /... o es ., es un paquete o ruta directa
+	if target == "./..." || target == "." {
+		runDir = rootDirectory
+		testPkg = target
+	} else if strings.HasSuffix(target, "/...") {
+		runDir = rootDirectory
+		testPkg = target
+	} else {
+		// Verificar si target es un directorio o archivo existente relativo a rootDirectory
+		fullPath := filepath.Join(rootDirectory, target)
+		fi, err := os.Stat(fullPath)
+		if err == nil {
+			if fi.IsDir() {
+				runDir = fullPath
+				testPkg = "./..."
+			} else {
+				runDir = filepath.Dir(fullPath)
+				testPkg = "./..."
+			}
+		} else {
+			// Intentar buscar el archivo recursivamente si fue dado sólo por nombre
+			foundDir, err := getDirByFile(rootDirectory, target)
+			if err == nil {
+				runDir = foundDir
+				testPkg = "./..."
+			} else {
+				// Tratarlo como paquete o patrón de go test
+				runDir = rootDirectory
+				testPkg = target
+			}
+		}
+	}
+
+	output, err := RunGoTests(runDir, testPkg)
 	if err != nil {
-		return fmt.Sprintf("run_test_in_go: error obteniendo el directorio donde se encuentra %s", targetFile)
+		if strings.TrimSpace(output) != "" {
+			return fmt.Sprintf("Pruebas fallidas:\n%s", output)
+		}
+		return fmt.Sprintf("Pruebas fallidas: %v", err)
 	}
 
-	fmt.Printf("Directorio encontrado para '%s': %s\n", targetFile, projectDir)
-	fmt.Println("Ejecutando pruebas...")
-
-	// 2. Ejecutar go test en ese directorio
-	if err := RunGoTests(projectDir); err != nil {
-		return fmt.Sprintf("Pruebas fallidas: %v\n", err)
+	if strings.TrimSpace(output) == "" {
+		return "¡Todas las pruebas pasaron con éxito! (sin salida detallada)"
 	}
-
-	return "¡Todas las pruebas pasaron con éxito!"
+	return fmt.Sprintf("¡Todas las pruebas pasaron con éxito!\n%s", output)
 }
 
-// GetDirByFile busca un archivo específico a partir de un directorio inicial
+// getDirByFile busca un archivo específico a partir de un directorio inicial
 // y retorna la ruta absoluta de la carpeta que lo contiene.
 func getDirByFile(startDir string, targetFileName string) (string, error) {
 	var targetDir string
@@ -44,19 +82,17 @@ func getDirByFile(startDir string, targetFileName string) (string, error) {
 			return err
 		}
 
-		// Evita buscar dentro de carpetas ocultas o de dependencias comunes (.git, vendor, node_modules)
-		if info.IsDir() && (info.Name() == ".git" || info.Name() == "vendor") {
+		if info.IsDir() && (info.Name() == ".git" || info.Name() == "vendor" || info.Name() == "node_modules") {
 			return filepath.SkipDir
 		}
 
-		// Compara si el archivo coincide con el parámetro solicitado
 		if !info.IsDir() && info.Name() == targetFileName {
 			absPath, err := filepath.Abs(filepath.Dir(path))
 			if err != nil {
 				return err
 			}
 			targetDir = absPath
-			return filepath.SkipAll // Detener la búsqueda al encontrar la primera coincidencia
+			return filepath.SkipAll
 		}
 
 		return nil
@@ -73,12 +109,18 @@ func getDirByFile(startDir string, targetFileName string) (string, error) {
 	return targetDir, nil
 }
 
-// RunGoTests ejecuta 'go test -count=1 -v ./...' en el directorio especificado.
-func RunGoTests(dir string) error {
-	cmd := exec.Command("go", "test", "-count=1", "-v", "./...")
-	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+// RunGoTests ejecuta 'go test -count=1 -v <pkg>' en el directorio especificado y captura la salida.
+func RunGoTests(dir string, args ...string) (string, error) {
+	cmdArgs := []string{"test", "-count=1", "-v"}
+	if len(args) > 0 {
+		cmdArgs = append(cmdArgs, args...)
+	} else {
+		cmdArgs = append(cmdArgs, "./...")
+	}
 
-	return cmd.Run()
+	cmd := exec.Command("go", cmdArgs...)
+	cmd.Dir = dir
+
+	outputBytes, err := cmd.CombinedOutput()
+	return string(outputBytes), err
 }

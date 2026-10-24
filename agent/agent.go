@@ -2,8 +2,8 @@ package agent
 
 import (
 	"bufio"
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -15,84 +15,123 @@ type Agent struct {
 	model        string
 	verbose      bool
 	systemPrompt string
+	maxToolSteps int
+	client       *genai.Client
+	ctx          context.Context
+	cancel       context.CancelFunc
 }
 
 func (a *Agent) Start() {
-	err := a.configurate()
+	err := a.configure()
 	if err != nil {
-		log.Println(err)
+		fmt.Printf("Error de inicialización del agente: %v\n", err)
 		return
+	}
+	if a.cancel != nil {
+		defer a.cancel()
 	}
 	a.runAgent()
 }
 
 func (a *Agent) runAgent() {
 	var messages []*genai.Content
-	var input string
-	for {
-		var cleanInput string
-		if input == "" {
-			scanner := bufio.NewScanner(os.Stdin)
-			fmt.Print(">: ")
-			if scanner.Scan() {
-				input = scanner.Text()
-			}
+	scanner := bufio.NewScanner(os.Stdin)
 
-			cleanInput = strings.ToLower(strings.TrimSpace(input))
-			if cleanInput == "" {
-				continue
-			}
-			if cleanInput == "quit" || cleanInput == "exit" || cleanInput == "salir" {
-				fmt.Println("Adiós")
-				break
-			}
-			messages = append(messages, &genai.Content{
-				Role: "user",
-				Parts: []*genai.Part{
-					genai.NewPartFromText(cleanInput),
-				},
-			})
+	for {
+		if a.ctx != nil && a.ctx.Err() != nil {
+			fmt.Println("\nOperación interrumpida.")
+			break
 		}
-		res, err := a.requestInput(messages)
-		if err != nil {
-			fmt.Printf("Error request to %s %s\n", a.model, err)
-			input = ""
+
+		fmt.Print(">: ")
+		if !scanner.Scan() {
+			fmt.Println("\nHasta luego")
+			break
+		}
+
+		rawInput := scanner.Text()
+		trimmedInput := strings.TrimSpace(rawInput)
+		if trimmedInput == "" {
 			continue
 		}
-		if a.verbose {
-			fmt.Printf("model of gemini: %s\n", a.model)
-			fmt.Printf("user input: %s\n", cleanInput)
-			fmt.Printf("Prompt Token %d\n", res.UsageMetadata.PromptTokenCount)
-			fmt.Printf("Response Token %d\n", res.UsageMetadata.CandidatesTokenCount)
+
+		lowerInput := strings.ToLower(trimmedInput)
+		if lowerInput == "quit" || lowerInput == "exit" || lowerInput == "salir" {
+			fmt.Println("Adiós")
+			break
 		}
 
-		functionCalls := res.FunctionCalls()
-		if len(functionCalls) == 0 {
-			fmt.Printf("Response: %s\n", res.Text())
-			input = ""
-		}
-
+		// Preservar mayúsculas y minúsculas originales del usuario
 		messages = append(messages, &genai.Content{
-			Role:  "model",
-			Parts: res.Candidates[0].Content.Parts, // The model's original function call request
+			Role: "user",
+			Parts: []*genai.Part{
+				genai.NewPartFromText(trimmedInput),
+			},
 		})
-		for _, call := range functionCalls {
-			fmt.Printf("🤖 Gemini requested function call: %s with args: %v\n", call.Name, call.Args)
-			resultExecuteTool, err := tools.ExecuteCall(call.Name, call.Args)
-			var result map[string]any
+
+		stepCount := 0
+		for {
+			res, err := a.requestInput(messages)
 			if err != nil {
-				result = map[string]any{"error": err.Error()}
-			} else {
-				result = resultExecuteTool
+				fmt.Printf("Error en la solicitud a %s: %v\n", a.model, err)
+				break
+			}
+
+			if a.verbose {
+				fmt.Printf("[Verbose] Modelo: %s\n", a.model)
+				if res.UsageMetadata != nil {
+					fmt.Printf("[Verbose] Tokens entrada: %d | Tokens salida: %d\n",
+						res.UsageMetadata.PromptTokenCount, res.UsageMetadata.CandidatesTokenCount)
+				}
+			}
+
+			if len(res.Candidates) == 0 || res.Candidates[0].Content == nil {
+				fmt.Println("No se recibió respuesta válida del modelo.")
+				break
+			}
+
+			candidateContent := res.Candidates[0].Content
+			functionCalls := res.FunctionCalls()
+
+			respText := res.Text()
+			if strings.TrimSpace(respText) != "" {
+				fmt.Printf("🤖 Gemini: %s\n", respText)
 			}
 
 			messages = append(messages, &genai.Content{
-				Role: "user",
-				Parts: []*genai.Part{
-					genai.NewPartFromFunctionResponse(call.Name, result),
-				},
+				Role:  "model",
+				Parts: candidateContent.Parts,
+			})
+
+			// Si no hubo llamadas a herramientas, fin del turno actual
+			if len(functionCalls) == 0 {
+				break
+			}
+
+			stepCount++
+			if stepCount > a.maxToolSteps {
+				fmt.Printf("⚠️ Límite de ejecución de herramientas alcanzado (%d pasos).\n", a.maxToolSteps)
+				break
+			}
+
+			// Agrupar las respuestas de todas las herramientas llamadas en este turno en un único contenido
+			var responseParts []*genai.Part
+			for _, call := range functionCalls {
+				fmt.Printf("🛠️ Herramienta: %s con argumentos: %v\n", call.Name, call.Args)
+				toolResult, err := tools.ExecuteCall(call.Name, call.Args)
+				var resultPayload map[string]any
+				if err != nil {
+					resultPayload = map[string]any{"error": err.Error()}
+				} else {
+					resultPayload = toolResult
+				}
+				responseParts = append(responseParts, genai.NewPartFromFunctionResponse(call.Name, resultPayload))
+			}
+
+			messages = append(messages, &genai.Content{
+				Role:  "user",
+				Parts: responseParts,
 			})
 		}
-
 	}
 }

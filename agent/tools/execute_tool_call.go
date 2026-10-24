@@ -2,6 +2,7 @@ package tools
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jsierrab3991/basic-agent-google/functions"
 )
@@ -11,7 +12,7 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 
 	case "CreateFile":
 		filePath, ok := args["filePath"].(string)
-		if !ok {
+		if !ok || strings.TrimSpace(filePath) == "" {
 			return nil, fmt.Errorf("missing or invalid 'filePath' parameter")
 		}
 
@@ -24,15 +25,18 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 		return map[string]any{"result": result}, nil
 
 	case "GetFilesInfo":
-		workingDir, ok := args["workingDirectory"].(string)
-		if !ok {
-			return nil, fmt.Errorf("missing or invalid 'workingDirectory' parameter")
+		workingDir := "."
+		if val, exists := args["workingDirectory"]; exists && val != nil {
+			if wdStr, ok := val.(string); ok && strings.TrimSpace(wdStr) != "" {
+				workingDir = strings.TrimSpace(wdStr)
+			}
 		}
 
 		var directory *string
 		if val, exists := args["directory"]; exists && val != nil {
-			if dirStr, ok := val.(string); ok {
-				directory = &dirStr
+			if dirStr, ok := val.(string); ok && strings.TrimSpace(dirStr) != "" {
+				trimmed := strings.TrimSpace(dirStr)
+				directory = &trimmed
 			}
 		}
 
@@ -41,7 +45,7 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 
 	case "DeleteFile":
 		filePath, ok := args["filePath"].(string)
-		if !ok {
+		if !ok || strings.TrimSpace(filePath) == "" {
 			return nil, fmt.Errorf("missing or invalid 'filePath' parameter")
 		}
 
@@ -50,7 +54,7 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 
 	case "CreateDir":
 		dirPath, ok := args["dirPath"].(string)
-		if !ok {
+		if !ok || strings.TrimSpace(dirPath) == "" {
 			return nil, fmt.Errorf("missing or invalid 'dirPath' parameter")
 		}
 
@@ -62,7 +66,7 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 
 	case "DeleteDir":
 		dirPath, ok := args["dirPath"].(string)
-		if !ok {
+		if !ok || strings.TrimSpace(dirPath) == "" {
 			return nil, fmt.Errorf("missing or invalid 'dirPath' parameter")
 		}
 
@@ -74,14 +78,15 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 
 	case "ReadFileContent":
 		filename, ok := args["filename"].(string)
-		if !ok {
+		if !ok || strings.TrimSpace(filename) == "" {
 			return nil, fmt.Errorf("missing or invalid 'filename' parameter")
 		}
 
 		var workDirectory *string
 		if val, exists := args["workDirectory"]; exists && val != nil {
-			if dirStr, ok := val.(string); ok {
-				workDirectory = &dirStr
+			if dirStr, ok := val.(string); ok && strings.TrimSpace(dirStr) != "" {
+				trimmed := strings.TrimSpace(dirStr)
+				workDirectory = &trimmed
 			}
 		}
 
@@ -89,15 +94,18 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 		return map[string]any{"result": result}, nil
 
 	case "RunTestInGo":
-		targetFile, ok := args["targetFile"].(string)
-		if !ok {
-			return nil, fmt.Errorf("missing or invalid 'targetFile' parameter")
+		targetFile := "./..."
+		if val, exists := args["targetFile"]; exists && val != nil {
+			if tf, ok := val.(string); ok && strings.TrimSpace(tf) != "" {
+				targetFile = strings.TrimSpace(tf)
+			}
 		}
 
 		var searchRoot *string
 		if val, exists := args["searchRoot"]; exists && val != nil {
-			if rootStr, ok := val.(string); ok {
-				searchRoot = &rootStr
+			if rootStr, ok := val.(string); ok && strings.TrimSpace(rootStr) != "" {
+				trimmed := strings.TrimSpace(rootStr)
+				searchRoot = &trimmed
 			}
 		}
 
@@ -106,7 +114,7 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 
 	case "RunPythonTests":
 		dirPath, ok := args["dirPath"].(string)
-		if !ok {
+		if !ok || strings.TrimSpace(dirPath) == "" {
 			return nil, fmt.Errorf("missing or invalid 'dirPath' parameter")
 		}
 

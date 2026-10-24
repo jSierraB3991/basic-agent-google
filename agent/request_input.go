@@ -2,20 +2,23 @@ package agent
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/jsierrab3991/basic-agent-google/agent/tools"
 	"google.golang.org/genai"
 )
 
 func (a *Agent) requestInput(messages []*genai.Content) (*genai.GenerateContentResponse, error) {
-
-	ctx := context.Background()
-	client, err := genai.NewClient(ctx, nil)
-	if err != nil {
-		log.Fatalf("Error to create client: %v", err)
+	if a.client == nil {
+		return nil, fmt.Errorf("el cliente de Gemini no está inicializado")
 	}
-	return client.Models.GenerateContent(
+
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	return a.client.Models.GenerateContent(
 		ctx,
 		a.model,
 		messages,

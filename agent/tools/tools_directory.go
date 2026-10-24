@@ -11,7 +11,7 @@ func createDirTool() *genai.FunctionDeclaration {
 			Properties: map[string]*genai.Schema{
 				"dirPath": {
 					Type:        genai.TypeString,
-					Description: "Path of the directory to create, need the of new folder.",
+					Description: "Path of the directory to create.",
 				},
 			},
 			Required: []string{"dirPath"},
@@ -45,7 +45,8 @@ func getFilesInfoTool() *genai.FunctionDeclaration {
 			Properties: map[string]*genai.Schema{
 				"workingDirectory": {
 					Type:        genai.TypeString,
-					Description: "The absolute path of the main working directory.",
+					Description: "The working directory path to inspect (defaults to '.' for current directory).",
+					Nullable:    new(true),
 				},
 				"directory": {
 					Type:        genai.TypeString,
@@ -53,7 +54,6 @@ func getFilesInfoTool() *genai.FunctionDeclaration {
 					Nullable:    new(true),
 				},
 			},
-			Required: []string{"workingDirectory"},
 		},
 	}
 }

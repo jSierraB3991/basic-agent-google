@@ -6,13 +6,13 @@ An interactive terminal-based AI coding assistant written in Go that integrates 
 
 ## Features
 
-- 🤖 **Gemini AI Integration**: Powered by Google GenAI SDK supporting advanced function calling.
+- 🤖 **Gemini AI Integration**: Powered by Google GenAI SDK supporting advanced function calling and parallel tool executions.
 - 🛠️ **Local Development Tools**: Allows Gemini to autonomously execute local file system and testing operations:
-  - **File Operations**: Create, read, delete files, and retrieve directory/file info.
-  - **Directory Operations**: Create and delete directories.
-  - **Testing**: Run Go and Python unit tests.
-- 🖥️ **Interactive CLI**: Easy-to-use REPL terminal interface supporting commands like `quit`, `exit`, or `salir`.
-- ⚙️ **Configurable Environment**: Loads configuration variables via `.env`.
+  - **File Operations**: Create, read, delete files, and retrieve directory/file info safely.
+  - **Directory Operations**: Create and delete directories (with guardrails protecting project root).
+  - **Testing**: Run Go and Python unit tests with captured output returned to the model.
+- 🖥️ **Interactive CLI**: Easy-to-use REPL terminal interface supporting commands like `quit`, `exit`, or `salir`, as well as clean EOF and SIGINT (Ctrl+C) handling.
+- ⚙️ **Configurable Environment & Flags**: Reads configuration from `.env` and supports runtime CLI flags (`-model`, `-verbose`, `-max-steps`).
 
 ---
 
@@ -29,7 +29,7 @@ An interactive terminal-based AI coding assistant written in Go that integrates 
 │       ├── tools_directory.go# Directory creation and deletion tools
 │       ├── tools_files.go    # File creation, reading, deletion, and info tools
 │       └── tools_run_testing.go # Go and Python test execution tools
-├── functions/                # Tool functions declared and implemented for the agent
+├── functions/                # Tool implementations and system operations
 ├── go.mod                    # Go module dependencies
 ├── go.sum                    # Go checksum file
 └── main.go                   # Application entry point
@@ -39,7 +39,7 @@ An interactive terminal-based AI coding assistant written in Go that integrates 
 
 ## Prerequisites
 
-- **Go** (version 1.22 or higher recommended; project uses Go 1.26+)
+- **Go** (version 1.22 or higher; project tested on Go 1.26+)
 - **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/)
 
 ---
@@ -56,8 +56,8 @@ An interactive terminal-based AI coding assistant written in Go that integrates 
    Create a `.env` file in the root directory of the project and add your Gemini API key (and optionally configure the model or verbose mode):
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
-   GEMINI_MODEL=gemini-2.5-flash  # Optional (defaults vary per implementation)
-   VERBOSE=true                  # Optional
+   GEMINI_MODEL=gemini-2.5-flash  # Optional (defaults to gemini-2.5-flash)
+   VERBOSE=true                  # Optional (defaults to false)
    ```
 
 3. **Install Dependencies**:
@@ -75,6 +75,12 @@ Start the interactive agent CLI:
 go run main.go
 ```
 
+You can also pass optional CLI arguments:
+
+```bash
+go run main.go -model gemini-2.5-flash -verbose -max-steps 10
+```
+
 Once running, you can interact with the agent in the terminal prompt:
 
 ```text
@@ -82,21 +88,21 @@ Simple Code agent With gemini
 >: Hello, can you list the files in the current directory?
 ```
 
-To exit the agent, type `quit`, `exit`, or `salir`.
+To exit the agent, type `quit`, `exit`, `salir`, or press `Ctrl+D` / `Ctrl+C`.
 
 ---
 
 ## Available Agent Tools
 
 The Gemini model can dynamically invoke the following tools during your conversation:
-1. **`getFilesInfo`**: Lists files and subdirectories inside a working directory.
-2. **`readFileContent`**: Reads and returns the complete content of a target file.
-3. **`createFile`**: Creates a new file with specified content at a given path.
-4. **`deleteFile`**: deletes a specified file.
-5. **`createDir`**: Creates a directory and any necessary parent directories.
-6. **`deleteDir`**: Deletes a directory and its contents.
-7. **`runTestInGo`**: Executes Go test suites for a target test file or package.
-8. **`runTestInPython`**: Executes Python unit tests inside a target directory.
+1. **`GetFilesInfo`**: Lists files and subdirectories inside a working directory.
+2. **`ReadFileContent`**: Reads and returns the complete content of a target file.
+3. **`CreateFile`**: Creates or overwrites a file with specified content at a given path.
+4. **`DeleteFile`**: Deletes a specified file from the filesystem.
+5. **`CreateDir`**: Creates a directory and any necessary parent directories.
+6. **`DeleteDir`**: Deletes a directory and its contents recursively (protecting root).
+7. **`RunTestInGo`**: Executes Go test suites (package, test file, or `./...`) and captures stdout/stderr.
+8. **`RunPythonTests`**: Executes Python unit tests using `pytest` or `unittest`.
 
 ---
 
