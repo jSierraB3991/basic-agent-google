@@ -1,5 +1,6 @@
 .env
-build/http-cli
+build/basic-agent-google
 tcpgochat
 portscanner
 __debug_bin**
+src

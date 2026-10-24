@@ -59,15 +59,15 @@ func (a *Agent) runAgent() {
 			input = ""
 			continue
 		}
+		if a.verbose {
+			fmt.Printf("model of gemini: %s\n", a.model)
+			fmt.Printf("user input: %s\n", cleanInput)
+			fmt.Printf("Prompt Token %d\n", res.UsageMetadata.PromptTokenCount)
+			fmt.Printf("Response Token %d\n", res.UsageMetadata.CandidatesTokenCount)
+		}
 
 		functionCalls := res.FunctionCalls()
 		if len(functionCalls) == 0 {
-			if a.verbose {
-				fmt.Printf("model of gemini: %s\n", a.model)
-				fmt.Printf("user input: %s\n", cleanInput)
-				fmt.Printf("Prompt Token %d\n", res.UsageMetadata.PromptTokenCount)
-				fmt.Printf("Response Token %d\n", res.UsageMetadata.CandidatesTokenCount)
-			}
 			fmt.Printf("Response: %s\n", res.Text())
 			input = ""
 		}
