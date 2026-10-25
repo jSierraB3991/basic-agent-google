@@ -76,6 +76,18 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 		}
 		return map[string]any{"result": fmt.Sprintf("Directory '%s' deleted successfully", dirPath)}, nil
 
+	case "ChangeDir":
+		dirPath, ok := args["dirPath"].(string)
+		if !ok || strings.TrimSpace(dirPath) == "" {
+			return nil, fmt.Errorf("missing or invalid 'dirPath' parameter")
+		}
+
+		newDir, err := functions.ChangeDir(dirPath)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"result": fmt.Sprintf("Changed working directory to '%s'", newDir)}, nil
+
 	case "ReadFileContent":
 		filename, ok := args["filename"].(string)
 		if !ok || strings.TrimSpace(filename) == "" {

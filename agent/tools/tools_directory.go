@@ -36,6 +36,23 @@ func deleteDirTool() *genai.FunctionDeclaration {
 	}
 }
 
+func changeDirTool() *genai.FunctionDeclaration {
+	return &genai.FunctionDeclaration{
+		Name:        "ChangeDir",
+		Description: "Changes the current working directory of the process to the specified path.",
+		Parameters: &genai.Schema{
+			Type: genai.TypeObject,
+			Properties: map[string]*genai.Schema{
+				"dirPath": {
+					Type:        genai.TypeString,
+					Description: "Path of the directory to change to.",
+				},
+			},
+			Required: []string{"dirPath"},
+		},
+	}
+}
+
 func getFilesInfoTool() *genai.FunctionDeclaration {
 	return &genai.FunctionDeclaration{
 		Name:        "GetFilesInfo",

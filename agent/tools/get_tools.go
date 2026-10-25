@@ -10,6 +10,7 @@ func getTools() *genai.Tool {
 			deleteFileTool(),
 			createDirTool(),
 			deleteDirTool(),
+			changeDirTool(),
 			readFileContentTool(),
 			runTestInGoTool(),
 			runTestInPythonTool(),
