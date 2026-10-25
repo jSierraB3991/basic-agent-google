@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/jsierrab3991/basic-agent-google/agent/tools"
@@ -33,17 +35,33 @@ func (a *Agent) Start() {
 	a.runAgent()
 }
 
+func clearTerminal() {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
+
 func (a *Agent) runAgent() {
 	var messages []*genai.Content
 	scanner := bufio.NewScanner(os.Stdin)
+	defer func() {
+		err := scanner.Err()
+		if err != nil {
+			log.Printf("Error close scanner %v", err)
+		}
 
+	}()
+
+	colorCwd := "\033[33m"
+	resetColor := "\033[0m"
 	for {
 		if a.ctx != nil && a.ctx.Err() != nil {
 			fmt.Println("\nOperación interrumpida.")
 			break
 		}
 
-		fmt.Print(">: ")
+		cwd, _ := os.Getwd()
+		fmt.Printf("%s %s %s > ", colorCwd, cwd, resetColor)
 		if !scanner.Scan() {
 			fmt.Println("\nHasta luego")
 			break
@@ -59,6 +77,11 @@ func (a *Agent) runAgent() {
 		if lowerInput == "quit" || lowerInput == "exit" || lowerInput == "salir" {
 			fmt.Println("Adiós")
 			break
+		}
+
+		if lowerInput == "clear" || lowerInput == "cls" {
+			clearTerminal()
+			continue
 		}
 
 		// Preservar mayúsculas y minúsculas originales del usuario
@@ -83,6 +106,15 @@ func (a *Agent) runAgent() {
 					fmt.Printf("[Verbose] Tokens entrada: %d | Tokens salida: %d\n",
 						res.UsageMetadata.PromptTokenCount, res.UsageMetadata.CandidatesTokenCount)
 				}
+			}
+
+			// Mostrar información de uso y metadatos de tokens / uso general si está disponible en la respuesta
+			if res.UsageMetadata != nil {
+				fmt.Printf("📊 [Uso de Tokens] Prompt: %d | Candidatos (Respuesta): %d | Total: %d\n",
+					res.UsageMetadata.PromptTokenCount,
+					res.UsageMetadata.CandidatesTokenCount,
+					res.UsageMetadata.TotalTokenCount,
+				)
 			}
 
 			if len(res.Candidates) == 0 || res.Candidates[0].Content == nil {
