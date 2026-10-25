@@ -17,7 +17,7 @@ func (a *Agent) configurate() error {
 func (a *Agent) configure() error {
 	defaultModel := os.Getenv("GEMINI_MODEL")
 	if strings.TrimSpace(defaultModel) == "" {
-		defaultModel = "gemini-2.5-flash"
+		defaultModel = "gemini-3.5-flash-lite"
 	}
 
 	defaultVerbose := false
