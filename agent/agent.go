@@ -61,7 +61,7 @@ func (a *Agent) runAgent() {
 		}
 
 		cwd, _ := os.Getwd()
-		fmt.Printf("%s %s %s > ", colorCwd, cwd, resetColor)
+		fmt.Printf("%s > %s %s %s > ", a.model, colorCwd, cwd, resetColor)
 		if !scanner.Scan() {
 			fmt.Println("\nHasta luego")
 			break

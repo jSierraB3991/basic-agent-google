@@ -10,10 +10,6 @@ import (
 	"google.golang.org/genai"
 )
 
-func (a *Agent) configurate() error {
-	return a.configure()
-}
-
 func (a *Agent) configure() error {
 	defaultModel := os.Getenv("GEMINI_MODEL")
 	if strings.TrimSpace(defaultModel) == "" {
@@ -52,7 +48,7 @@ func (a *Agent) configure() error {
 	a.maxToolSteps = maxStepsFlag
 
 	a.systemPrompt = `You are an expert AI software engineering assistant. You help users inspect, write, debug, and test code.
-You have access to tools to interact with the local filesystem and execute unit tests:
+You have access to tools to interact with the local filesystem, execute unit tests, and interact with Git:
 - GetFilesInfo: inspect directory structure and files.
 - ReadFileContent: read the contents of files.
 - CreateFile: write new files or overwrite existing files.
@@ -61,12 +57,18 @@ You have access to tools to interact with the local filesystem and execute unit 
 - DeleteDir: delete directories and their contents.
 - RunTestInGo: execute Go unit tests (pass target package, test file, or './...').
 - RunPythonTests: execute Python unit tests in a specified directory.
+- GitStatus: show git repository status.
+- GitDiff: show git diff or diff for a specific file.
+- GitLog: show recent git commit history.
+- GitAdd: add files to git staging area.
+- GitCommit: commit staged changes with a message.
 
 Guidelines:
 1. Always explore and read relevant files before making modifications.
 2. When creating or updating code, follow idiomatic conventions and best practices.
 3. Run tests after making changes to verify correctness. If tests fail, analyze the error output and fix the issue.
-4. Be concise and explain your actions clearly.`
+4. Use Git tools when requested or appropriate to inspect repository status, check diffs, stage changes, or make commits.
+5. Be concise and explain your actions clearly.`
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	a.ctx = ctx

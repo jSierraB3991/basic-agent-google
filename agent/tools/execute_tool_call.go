@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jsierrab3991/basic-agent-google/functions"
+	"github.com/jsierrab3991/basic-agent-google/functions/git"
 )
 
 func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
@@ -131,6 +132,87 @@ func ExecuteCall(name string, args map[string]any) (map[string]any, error) {
 		}
 
 		result := functions.RunPythonTests(dirPath)
+		return map[string]any{"result": result}, nil
+
+	case "GitStatus":
+		workingDir := "."
+		if val, exists := args["workingDir"]; exists && val != nil {
+			if wd, ok := val.(string); ok && strings.TrimSpace(wd) != "" {
+				workingDir = strings.TrimSpace(wd)
+			}
+		}
+		result := git.GitStatus(workingDir)
+		return map[string]any{"result": result}, nil
+
+	case "GitDiff":
+		workingDir := "."
+		if val, exists := args["workingDir"]; exists && val != nil {
+			if wd, ok := val.(string); ok && strings.TrimSpace(wd) != "" {
+				workingDir = strings.TrimSpace(wd)
+			}
+		}
+		var filePath *string
+		if val, exists := args["filePath"]; exists && val != nil {
+			if fp, ok := val.(string); ok && strings.TrimSpace(fp) != "" {
+				trimmed := strings.TrimSpace(fp)
+				filePath = &trimmed
+			}
+		}
+		result := git.GitDiff(workingDir, filePath)
+		return map[string]any{"result": result}, nil
+
+	case "GitLog":
+		workingDir := "."
+		if val, exists := args["workingDir"]; exists && val != nil {
+			if wd, ok := val.(string); ok && strings.TrimSpace(wd) != "" {
+				workingDir = strings.TrimSpace(wd)
+			}
+		}
+		var maxCount *int
+		if val, exists := args["maxCount"]; exists && val != nil {
+			switch mc := val.(type) {
+			case int:
+				if mc > 0 {
+					maxCount = &mc
+				}
+			case float64:
+				valInt := int(mc)
+				if valInt > 0 {
+					maxCount = &valInt
+				}
+			}
+		}
+		result := git.GitLog(workingDir, maxCount)
+		return map[string]any{"result": result}, nil
+
+	case "GitAdd":
+		workingDir := "."
+		if val, exists := args["workingDir"]; exists && val != nil {
+			if wd, ok := val.(string); ok && strings.TrimSpace(wd) != "" {
+				workingDir = strings.TrimSpace(wd)
+			}
+		}
+		pathspec := "."
+		if val, exists := args["pathspec"]; exists && val != nil {
+			if ps, ok := val.(string); ok && strings.TrimSpace(ps) != "" {
+				pathspec = strings.TrimSpace(ps)
+			}
+		}
+		result := git.GitAdd(workingDir, pathspec)
+		return map[string]any{"result": result}, nil
+
+	case "GitCommit":
+		workingDir := "."
+		if val, exists := args["workingDir"]; exists && val != nil {
+			if wd, ok := val.(string); ok && strings.TrimSpace(wd) != "" {
+				workingDir = strings.TrimSpace(wd)
+			}
+		}
+		message, ok := args["message"].(string)
+		if !ok || strings.TrimSpace(message) == "" {
+			return nil, fmt.Errorf("missing or invalid 'message' parameter for GitCommit")
+		}
+		result := git.GitCommit(workingDir, message)
 		return map[string]any{"result": result}, nil
 
 	default:

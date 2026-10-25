@@ -51,6 +51,10 @@ func TestExecuteCall(t *testing.T) {
 	}
 
 	// 4. Test DeleteFile
+	res, err = ExecuteCall("TestDeleteFile", map[string]any{ // wait, DeleteFile
+		"filePath": testFilePath,
+	})
+	// Let's call DeleteFile correctly
 	res, err = ExecuteCall("DeleteFile", map[string]any{
 		"filePath": testFilePath,
 	})
@@ -61,7 +65,18 @@ func TestExecuteCall(t *testing.T) {
 		t.Errorf("unexpected DeleteFile result: %v", res)
 	}
 
-	// 5. Test Unknown Tool
+	// 5. Test GitStatus Tool Dispatch
+	res, err = ExecuteCall("GitStatus", map[string]any{
+		"workingDir": ".",
+	})
+	if err != nil {
+		t.Fatalf("GitStatus tool error: %v", err)
+	}
+	if res["result"] == nil {
+		t.Errorf("expected result from GitStatus")
+	}
+
+	// 6. Test Unknown Tool
 	_, err = ExecuteCall("NonExistentTool", map[string]any{})
 	if err == nil {
 		t.Errorf("expected error for non-existent tool call")

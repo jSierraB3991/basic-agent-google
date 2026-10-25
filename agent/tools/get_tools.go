@@ -14,6 +14,11 @@ func getTools() *genai.Tool {
 			readFileContentTool(),
 			runTestInGoTool(),
 			runTestInPythonTool(),
+			gitStatusTool(),
+			gitDiffTool(),
+			gitLogTool(),
+			gitAddTool(),
+			gitCommitTool(),
 		},
 	}
 }
